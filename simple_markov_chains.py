@@ -11,17 +11,20 @@ from pathlib import Path
 
 
 def make_pairs(texts: list[list[str]]) -> ty.Iterator[str, str]:
-    for i in range(len(texts) - 1):
-        for j in range(len(texts[i]) - 1):
-            yield texts[i][j], texts[i][j + 1]
+    for sentence in texts:
+        for left_word, right_word in zip(sentence, sentence[1:]):
+            yield left_word, right_word
 
 
 def get_simplified_transition_matrix(texts: list[list[str]]) -> dict[str, Counter[str]]:
     # NOTE: not memory-optimized
     transition_matrix = defaultdict(Counter)
+    pair_count = 0
     for left_word, right_word in make_pairs(texts):
         transition_matrix[left_word].update([right_word])
+        pair_count += 1
 
+    print(f"total pairs: {pair_count}")
     return transition_matrix
 
 
@@ -35,16 +38,13 @@ def text_msg_filter(from_id: str, message: dict[str, ty.Any]) -> bool:
 def split_and_normalize(text_message: str) -> list[list[str]]:
     translator = str.maketrans('', '', string.punctuation)
 
-    def normalize(word: str) -> str:
-        return word.lower().translate(translator).strip()
-
     by_sentence_and_words = []
     for sentence in re.split(r"\(|\)|;|!|\?|\.", text_message):
         sentence = sentence.strip()
         if not sentence:
             continue
 
-        by_words = list(map(normalize, sentence.split()))
+        by_words = sentence.lower().translate(translator).strip().split()
         by_sentence_and_words.append(by_words)
 
     return by_sentence_and_words
@@ -96,4 +96,4 @@ if __name__ == "__main__":
     matrix = build_simplified_transition_matrix("user71398848")
     print()
     for _ in range(10):
-        print(build_random_sentence(matrix, sentence_length=10, by_most_common=5))
+        print(build_random_sentence(matrix, sentence_length=10, by_most_common=None))
