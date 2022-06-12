@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import operator
 import random
 import re
 import string
@@ -87,7 +88,10 @@ def build_random_sentence(
         counted_values = transition_matrix[sentence[-1]]
         most_common = counted_values.most_common(n=by_most_common)
         if most_common:
-            sentence.append(random.choice(list(map(lambda x: x[0], most_common))))
+            sentence += random.choices(
+                list(map(operator.itemgetter(0), most_common)),
+                list(map(operator.itemgetter(1), most_common)),
+            )
 
     return " ".join(sentence)
 
@@ -96,4 +100,4 @@ if __name__ == "__main__":
     matrix = build_simplified_transition_matrix("user71398848")
     print()
     for _ in range(10):
-        print(build_random_sentence(matrix, sentence_length=10, by_most_common=None))
+        print(build_random_sentence(matrix, sentence_length=5, by_most_common=None))
